@@ -18,20 +18,16 @@ class HomeScreen extends StatelessWidget {
         if (snapshot.hasData) {
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Account Information'),
+              title: const Text('Home Page'),
               centerTitle: true,
             ),
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Logged in as ${snapshot.data?.email}'),
-                  const SizedBox(height: 24),
-                  OutlinedButton(
-                    onPressed: () => logout(context),
-                    child: const Text('Logout'),
-                  )
-                ],
+                  //navbar
+                  
+                  ],
               ),
             ),
           );
