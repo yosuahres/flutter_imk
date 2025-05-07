@@ -9,8 +9,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
   firebase_core: ^3.13.0
   firebase_auth: ^5.5.3
+  lottie: ^3.3.1
+  geocoding: ^3.0.0
+  geolocator: ^14.0.0
 
 dev_dependencies:
   flutter_test:
@@ -19,3 +23,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/cloud.json
+    - assets/rain.json
+    - assets/sunny.json
+    - assets/storm.json
