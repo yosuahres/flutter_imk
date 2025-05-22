@@ -2,12 +2,11 @@ import 'package:fp_imk/screens/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fp_imk/pages/weather_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Required for SystemUiOverlayStyle
+import 'package:flutter/services.dart'; 
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // Color constants (can be moved to a central theme file later)
   static const Color _appHeaderColor = Color(0xFF609966);
   static const Color _statusBannerColor = Color(0xFFE9F5DB);
   static const Color _cardColor = Color(0xFFC5E1A5);
@@ -17,8 +16,6 @@ class HomeScreen extends StatelessWidget {
   static const Color _secondaryTextColor = Color(0xFF333333);
   static const Color _iconColorOnCard = Color(0xFF386641);
 
-  // This logout method can be called from other pages if needed,
-  // or use FirebaseAuth.instance.signOut() directly.
   static Future<void> performLogout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
     Navigator.of(context).pushAndRemoveUntil(
@@ -44,7 +41,7 @@ class HomeScreen extends StatelessWidget {
         }
         if (snapshot.hasData) {
           String userName = snapshot.data?.displayName ?? snapshot.data?.email?.split('@')[0] ?? "User";
-          if (userName == "User" && snapshot.data?.email == null) userName = "Arif";
+          if (userName == "User" && snapshot.data?.email == null) userName = "None";
 
           return Scaffold(
             backgroundColor: _scaffoldBgColor,
@@ -54,7 +51,7 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   _buildHeader(userName),
                   _buildStatusBanner(),
-                  Expanded(child: _buildGrid(context)), // Pass context to _buildGrid
+                  Expanded(child: _buildGrid(context)), 
                 ],
               ),
             ),
@@ -85,7 +82,7 @@ class HomeScreen extends StatelessWidget {
                   Icon(Icons.eco_outlined, color: _primaryTextColor, size: 28),
                   SizedBox(width: 8),
                   Text(
-                    'Green Guru',
+                    'Ikling',
                     style: TextStyle(
                         color: _primaryTextColor,
                         fontSize: 20,
@@ -147,12 +144,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGrid(BuildContext context) { // Added BuildContext context
+  Widget _buildGrid(BuildContext context) { 
     const IconData newsIcon = Icons.article_outlined;
     const IconData recycleIcon = Icons.recycling_outlined;
     const IconData educationIcon = Icons.science_outlined;
     const IconData footprintIcon = Icons.show_chart_outlined;
-    const IconData weatherIcon = Icons.cloud_outlined; // Icon for Weather
+    const IconData weatherIcon = Icons.cloud_outlined; 
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -174,7 +171,7 @@ class HomeScreen extends StatelessWidget {
           _buildGridItem(context, footprintIcon, 'Carbon Footprint\nTracking', () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
           }),
-          _buildGridItem(context, weatherIcon, 'Weather', () { // Changed icon and navigation
+          _buildGridItem(context, weatherIcon, 'Weather', () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
           }),
         ],
@@ -182,13 +179,13 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGridItem(BuildContext context, IconData icon, String label, VoidCallback onTapAction) { // Added BuildContext and onTapAction
+  Widget _buildGridItem(BuildContext context, IconData icon, String label, VoidCallback onTapAction) { 
     return Card(
       color: _cardColor,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
-        onTap: onTapAction, // Use the passed onTapAction
+        onTap: onTapAction, 
         borderRadius: BorderRadius.circular(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -230,8 +227,7 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildBottomNavItem(Icons.home, 'Home', true, () {
-              // Home is current, do nothing or pop to home if not on home
-              // For simplicity, keeping it as no-op if HomeScreen is always root here
+
             }),
             _buildBottomNavItem(Icons.notifications_outlined, 'Notification', false, () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
@@ -249,7 +245,7 @@ class HomeScreen extends StatelessWidget {
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20), // Optional: for visual feedback
+        borderRadius: BorderRadius.circular(20),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12.0),
           child: Column(
