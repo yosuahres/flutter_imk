@@ -1,6 +1,6 @@
 import 'package:fp_imk/screens/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fp_imk/pages/weather_page.dart';
+import 'package:fp_imk/screens/weather_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; 
 

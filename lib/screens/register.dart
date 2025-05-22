@@ -12,91 +12,146 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // Controllers for input fields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
-  // State variables
   bool _isLoading = false;
   String _errorCode = "";
 
-  // Navigation methods
+  final Color _backgroundColor = const Color(0xFF2E7D6E);
+  final Color _logoColor = const Color(0xFFBDECB6);
+  final Color _buttonColor = const Color(0xFF1E6052);
+  final Color _whiteTextColor = Colors.white;
+  final Color _inputFillColor = Colors.white;
+  final Color _inputHintColor = Colors.grey.shade500;
+  final Color _inputIconColor = Colors.grey.shade500;
+  final Color _inputTextColor = Colors.black87;
+
   void navigateLogin() {
     if (!context.mounted) return;
     Navigator.pushReplacementNamed(context, 'login');
   }
 
-  void navigateHome() {
+  void navigateHome() { 
     if (!context.mounted) return;
     Navigator.pushReplacementNamed(context, 'home');
   }
 
-  // Authentication methods
   void register() async {
-    setState(() {
-      _isLoading = true;
-      _errorCode = "";
-    });
-
-    try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-      navigateLogin();
-    } on FirebaseAuthException catch (e) {
+    if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
-        _errorCode = e.code;
+        _errorCode = "Passwords do not match.";
       });
+      return;
     }
 
-    setState(() {
-      _isLoading = false;
-    });
+    if (!_isLoading) {
+      setState(() {
+        _isLoading = true;
+        _errorCode = "";
+      });
+
+      try {
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+        if (mounted) navigateLogin();
+      } on FirebaseAuthException catch (e) {
+        if (mounted) {
+          setState(() {
+            _errorCode = e.message ?? "Registration failed. Please try again.";
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _errorCode = "An unexpected error occurred. Please try again.";
+          });
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose(); 
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      backgroundColor: _backgroundColor,
+      body: SafeArea(
         child: Center(
-          child: ListView(
-            children: [
-              const SizedBox(height: 200),
-              _buildHeader(),
-              const SizedBox(height: 60),
-              _buildEmailField(),
-              const SizedBox(height: 24),
-              _buildPasswordField(),
-              const SizedBox(height: 24),
-              if (_errorCode.isNotEmpty) _buildErrorMessage(),
-              _buildRegisterButton(),
-              _buildLoginRow(),
-            ],
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 20),
+                _buildLogo(),
+                const SizedBox(height: 25),
+                _buildHeader(),
+                const SizedBox(height: 40),
+                _buildEmailField(),
+                const SizedBox(height: 16),
+                _buildPasswordField(),
+
+                const SizedBox(height: 16),
+                _buildConfirmPasswordField(),
+                const SizedBox(height: 24),
+                if (_errorCode.isNotEmpty) _buildErrorMessage(),
+                _buildRegisterButton(),
+                const SizedBox(height: 30),
+                _buildLoginRow(),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // Widget builders for better structure
+  Widget _buildLogo() {
+    // Image.asset('assets/images/app_logo.png', height: 80)
+    return Icon(
+      Icons.spa_outlined, 
+      size: 90,
+      color: _logoColor,
+    );
+  }
+
   Widget _buildHeader() {
     return Column(
       children: [
         Text(
-          'Create an Account',
+          'Create Account',
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 25.0,
+          style: TextStyle(
+            fontSize: 34.0,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: _whiteTextColor,
           ),
         ),
+        // Optional subtitle:
         const SizedBox(height: 8),
         Text(
-          'Join us and start your journey',
+          'Join us and start your journey!',
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16.0,
-            color: Colors.grey,
+            color: _whiteTextColor.withOpacity(0.8),
           ),
         ),
       ],
@@ -106,12 +161,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildEmailField() {
     return TextField(
       controller: _emailController,
-      decoration: const InputDecoration(
-        label: Text('Email'),
+      keyboardType: TextInputType.emailAddress,
+      style: TextStyle(color: _inputTextColor),
+      decoration: InputDecoration(
+        hintText: 'Enter your Email address',
+        hintStyle: TextStyle(color: _inputHintColor),
+        prefixIcon: Icon(Icons.email_outlined, color: _inputIconColor),
+        filled: true,
+        fillColor: _inputFillColor,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(30.0)),
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: BorderSide.none,
         ),
-        contentPadding: EdgeInsets.all(18.0),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
       ),
     );
   }
@@ -120,47 +182,77 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return TextField(
       controller: _passwordController,
       obscureText: true,
-      decoration: const InputDecoration(
-        label: Text('Password'),
+      style: TextStyle(color: _inputTextColor),
+      decoration: InputDecoration(
+        hintText: 'Create a password',
+        hintStyle: TextStyle(color: _inputHintColor),
+        prefixIcon: Icon(Icons.lock_outline, color: _inputIconColor),
+        filled: true,
+        fillColor: _inputFillColor,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(30.0)),
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: BorderSide.none,
         ),
-        contentPadding: EdgeInsets.all(18.0),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+      ),
+    );
+  }
+
+  Widget _buildConfirmPasswordField() {
+    return TextField(
+      controller: _confirmPasswordController,
+      obscureText: true,
+      style: TextStyle(color: _inputTextColor),
+      decoration: InputDecoration(
+        hintText: 'Confirm your password',
+        hintStyle: TextStyle(color: _inputHintColor),
+        prefixIcon: Icon(Icons.lock_outline, color: _inputIconColor),
+        filled: true,
+        fillColor: _inputFillColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
       ),
     );
   }
 
   Widget _buildErrorMessage() {
-    return Column(
-      children: [
-        Text(
-          _errorCode,
-          style: const TextStyle(color: Colors.red),
-        ),
-        const SizedBox(height: 24),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0, top: 5.0),
+      child: Text(
+        _errorCode,
+        style: TextStyle(color: Colors.red.shade300, fontSize: 14),
+        textAlign: TextAlign.center,
+      ),
     );
   }
 
   Widget _buildRegisterButton() {
-    return OutlinedButton(
-      onPressed: register,
-      style: OutlinedButton.styleFrom(
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0),
+    return ElevatedButton(
+      onPressed: _isLoading ? null : register,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _buttonColor,
+        foregroundColor: _whiteTextColor,
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30.0),
+          borderRadius: BorderRadius.circular(8.0),
         ),
-        side: const BorderSide(color: Colors.blue, width: 2.0),
+        minimumSize: const Size(double.infinity, 50),
       ),
       child: _isLoading
-          ? const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ? SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(_whiteTextColor),
+                strokeWidth: 2.5,
+              ),
             )
           : const Text(
-              'REGISTER',
-              style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+              'Register', 
+              style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
             ),
     );
   }
@@ -169,10 +261,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('Already have an account?'),
-        TextButton(
-          onPressed: navigateLogin,
-          child: const Text('Login'),
+        Text(
+          'Already have an account? ',
+          style: TextStyle(color: _whiteTextColor, fontSize: 14.5),
+        ),
+        GestureDetector(
+          onTap: navigateLogin,
+          child: Text(
+            'Login here', 
+            style: TextStyle(
+              color: _whiteTextColor, // Or _logoColor for accent
+              fontWeight: FontWeight.bold,
+              fontSize: 14.5,
+              decoration: TextDecoration.underline,
+              decorationColor: _whiteTextColor.withOpacity(0.8),
+              decorationThickness: 1.5,
+            ),
+          ),
         ),
       ],
     );
