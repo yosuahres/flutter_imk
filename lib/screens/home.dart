@@ -1,3 +1,4 @@
+import 'package:fp_imk/screens/carbon_tracking_page.dart';
 import 'package:fp_imk/screens/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fp_imk/screens/weather_page.dart';
@@ -169,7 +170,7 @@ class HomeScreen extends StatelessWidget {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
           }),
           _buildGridItem(context, footprintIcon, 'Carbon Footprint\nTracking', () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const CarbonFootprintTrackingScreen()));
           }),
           _buildGridItem(context, weatherIcon, 'Weather', () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
