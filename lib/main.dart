@@ -10,6 +10,7 @@ import 'package:fp_imk/screens/login.dart';
 import 'package:fp_imk/screens/register.dart';
 import 'package:fp_imk/screens/weather_page.dart';
 import 'package:fp_imk/screens/carbon_tracking_page.dart';
+import 'package:fp_imk/screens/recycle.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
       'login': (context) => const LoginScreen(),
       'register': (context) => const RegisterScreen(),
       'carbon': (context) => const CarbonFootprintTrackingScreen(),
+      'recycle': (context) => const RecycleScreen(),
     });
   }
 }
