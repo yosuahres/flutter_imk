@@ -1,7 +1,8 @@
-import 'package:fp_imk/screens/carbon_tracking_page.dart';
-import 'package:fp_imk/screens/login.dart';
+import 'package:fp_imk/screens/carbonpage/carbon_tracking_page.dart';
+import 'package:fp_imk/screens/auth/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fp_imk/screens/profile.dart';
+import 'package:fp_imk/screens/recyclepage/recycle.dart';
 import 'package:fp_imk/screens/weather_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; 
@@ -172,7 +173,7 @@ class HomeScreen extends StatelessWidget {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
           }),
           _buildGridItem(context, recycleIcon, 'Recycle', () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const RecycleScreen()));
           }),
           _buildGridItem(context, educationIcon, 'Climate Education', () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));

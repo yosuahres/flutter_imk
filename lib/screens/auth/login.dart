@@ -124,7 +124,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildLogo() {
-    // Example: Image.asset('assets/images/app_logo.png', height: 80)
     return Icon(
       Icons.spa_outlined, 
       size: 90,
@@ -172,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: InputDecoration(
         hintText: 'Enter your password',
         hintStyle: TextStyle(color: _inputHintColor),
-        prefixIcon: Icon(Icons.lock_outline, color: _inputIconColor), // Or Icons.vpn_key_outlined
+        prefixIcon: Icon(Icons.lock_outline, color: _inputIconColor), 
         filled: true,
         fillColor: _inputFillColor,
         border: OutlineInputBorder(

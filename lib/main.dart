@@ -6,11 +6,11 @@ import 'package:fp_imk/service/notification_service.dart';
 
 //pages
 import 'package:fp_imk/screens/home.dart';
-import 'package:fp_imk/screens/login.dart';
-import 'package:fp_imk/screens/register.dart';
+import 'package:fp_imk/screens/auth/login.dart';
+import 'package:fp_imk/screens/auth/register.dart';
 import 'package:fp_imk/screens/weather_page.dart';
-import 'package:fp_imk/screens/carbon_tracking_page.dart';
-import 'package:fp_imk/screens/recycle.dart';
+import 'package:fp_imk/screens/carbonpage/carbon_tracking_page.dart';
+import 'package:fp_imk/screens/recyclepage/recycle.dart';
 import 'package:fp_imk/screens/profile.dart';
 
 void main() async {

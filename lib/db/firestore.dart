@@ -4,7 +4,6 @@ class FirestoreService {
   final CollectionReference userFootprintLogs =
       FirebaseFirestore.instance.collection('user_footprint_logs');
 
-  /// CREATE: Add a new user footprint log
   Future<void> addUserFootprintLog({
     required String userId,
     required String activityTitle,
@@ -21,7 +20,6 @@ class FirestoreService {
     });
   }
 
-  /// READ: Fetch user footprint logs for a specific user, optionally from a certain date, and limits the result.
   Future<QuerySnapshot> getUserFootprintLogs({
     required String userId,
     DateTime? from,
@@ -35,7 +33,6 @@ class FirestoreService {
     return query.get();
   }
 
-  /// UPDATE: Update a user footprint log by document ID
   Future<void> updateUserFootprintLog({
     required String docId,
     required Map<String, dynamic> data,
@@ -43,8 +40,40 @@ class FirestoreService {
     await userFootprintLogs.doc(docId).update(data);
   }
 
-  /// DELETE: Delete a user footprint log by document ID
   Future<void> deleteUserFootprintLog(String docId) async {
     await userFootprintLogs.doc(docId).delete();
+  }
+
+
+  // Collection for recycle logs
+
+  final CollectionReference recycleLogs =
+      FirebaseFirestore.instance.collection('recycle_logs');
+
+  Future<void> addRecycleLog({
+    required String userId,
+    required String location,
+    required String description,
+    String? imageUrl,
+    required DateTime timestamp,
+  }) async {
+    await recycleLogs.add({
+      'userId': userId,
+      'location': location,
+      'description': description,
+      'imageUrl': imageUrl,
+      'timestamp': timestamp,
+    });
+  }
+
+  Future<QuerySnapshot> getRecycleLogs({required String userId}) {
+    return recycleLogs
+        .where('userId', isEqualTo: userId)
+        .orderBy('timestamp', descending: true)
+        .get();
+  }
+
+  Future<void> deleteRecycleLog(String docId) async {
+    await recycleLogs.doc(docId).delete();
   }
 }

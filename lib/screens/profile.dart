@@ -10,8 +10,11 @@ class ProfileScreen extends StatefulWidget {
 class _RecycleState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        backgroundColor: const Color(0xFF2E7D6E),
+      ),
     );
   }
 }

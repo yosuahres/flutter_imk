@@ -9,7 +9,6 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  // Controllers for input fields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -270,7 +269,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Text(
             'Login here', 
             style: TextStyle(
-              color: _whiteTextColor, // Or _logoColor for accent
+              color: _whiteTextColor, 
               fontWeight: FontWeight.bold,
               fontSize: 14.5,
               decoration: TextDecoration.underline,

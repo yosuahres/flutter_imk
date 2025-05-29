@@ -18,11 +18,11 @@ class _CarbonFootprintTrackingScreenState
     extends State<CarbonFootprintTrackingScreen> {
   static const Color _appBarColor = Color(0xFF69A56E);
   static const Color _primaryTextColorDarkBg = Colors.white;
-  static const Color _scaffoldBgColor = Color(0xFFF0F2F0); // Lighter gray
+  static const Color _scaffoldBgColor = Color(0xFFF0F2F0); 
   static const Color _cardColor = Colors.white;
   static const Color _primaryTextColorLightBg = Colors.black87;
   static const Color _secondaryTextColorLightBg = Colors.black54;
-  static const Color _accentColor = Color(0xFF4CAF50); // A slightly brighter green
+  static const Color _accentColor = Color(0xFF4CAF50); 
 
   User? _currentUser;
   final FirestoreService _firestoreService = FirestoreService();
@@ -40,7 +40,6 @@ class _CarbonFootprintTrackingScreenState
   Future<void> _fetchFootprintData() async {
     if (_currentUser == null) return;
 
-    // Use FirestoreService to get today's logs for this user
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
     final logsSnapshot = await _firestoreService.getUserFootprintLogs(
@@ -336,7 +335,7 @@ class _CarbonFootprintTrackingScreenState
      void _showEditLogDialog(Map<String, dynamic> activity) {
     final titleController = TextEditingController(text: activity['title']);
     final valueController = TextEditingController(
-      text: (activity['value'] as String).split(' ').first, // get number part
+      text: (activity['value'] as String).split(' ').first, 
     );
 
     showDialog(
