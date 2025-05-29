@@ -1,6 +1,7 @@
 import 'package:fp_imk/screens/carbon_tracking_page.dart';
 import 'package:fp_imk/screens/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fp_imk/screens/profile.dart';
 import 'package:fp_imk/screens/weather_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; 
@@ -50,7 +51,7 @@ class HomeScreen extends StatelessWidget {
               top: false,
               child: Column(
                 children: [
-                  _buildHeader(userName),
+                  _buildHeader(context, userName),
                   _buildStatusBanner(),
                   Expanded(child: _buildGrid(context)), 
                 ],
@@ -68,7 +69,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(String userName) {
+  Widget _buildHeader(BuildContext context, String userName) {
     return Container(
       padding: const EdgeInsets.only(top: 16.0 + kToolbarHeight / 3, left: 16.0, right: 16.0, bottom: 16.0),
       color: _appHeaderColor,
@@ -98,10 +99,17 @@ class HomeScreen extends StatelessWidget {
                     style: const TextStyle(color: _primaryTextColor, fontSize: 16),
                   ),
                   const SizedBox(width: 8),
-                  CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.person, color: _appHeaderColor.withOpacity(0.8), size: 24,),
-                    radius: 18,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context, MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                      );
+                    },
+                    child: CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.person, color: _appHeaderColor.withOpacity(0.8), size: 24,),
+                      radius: 18,
+                    ),
                   ),
                 ],
               ),

@@ -11,6 +11,7 @@ import 'package:fp_imk/screens/register.dart';
 import 'package:fp_imk/screens/weather_page.dart';
 import 'package:fp_imk/screens/carbon_tracking_page.dart';
 import 'package:fp_imk/screens/recycle.dart';
+import 'package:fp_imk/screens/profile.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,13 +27,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(initialRoute: 'home', routes: {
+    return MaterialApp(initialRoute: 'login', routes: {
       'home': (context) => const HomeScreen(),
       'weather': (context) => const WeatherPage(),
       'login': (context) => const LoginScreen(),
       'register': (context) => const RegisterScreen(),
       'carbon': (context) => const CarbonFootprintTrackingScreen(),
       'recycle': (context) => const RecycleScreen(),
+      'profile': (context) => const ProfileScreen(),
     });
   }
 }

@@ -140,23 +140,23 @@ class _CarbonFootprintTrackingScreenState
         style: TextStyle(color: _primaryTextColorDarkBg, fontWeight: FontWeight.bold),
       ),
       actions: [
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Text(
-              userName,
-              style: const TextStyle(color: _primaryTextColorDarkBg, fontSize: 16),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 16.0),
-          child: CircleAvatar(
-            backgroundColor: Colors.white,
-            child: Icon(Icons.person, color: _appBarColor.withOpacity(0.8), size: 24),
-            radius: 18,
-          ),
-        ),
+        // Center(
+        //   child: Padding(
+        //     padding: const EdgeInsets.only(right: 8.0),
+        //     child: Text(
+        //       userName,
+        //       style: const TextStyle(color: _primaryTextColorDarkBg, fontSize: 16),
+        //     ),
+        //   ),
+        // ),
+        // Padding(
+        //   padding: const EdgeInsets.only(right: 16.0),
+        //   child: CircleAvatar(
+        //     backgroundColor: Colors.white,
+        //     child: Icon(Icons.person, color: _appBarColor.withOpacity(0.8), size: 24),
+        //     radius: 18,
+        //   ),
+        // ),
       ],
     );
   }
