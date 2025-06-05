@@ -2,388 +2,561 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fp_imk/db/firestore.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:fp_imk/db/firestore.dart'; // Use your real FirestoreService
 
-import 'log_activity_screen.dart';
-
-class CarbonFootprintTrackingScreen extends StatefulWidget {
-  const CarbonFootprintTrackingScreen({super.key});
+class CarbonTrackingScreen extends StatefulWidget {
+  const CarbonTrackingScreen({Key? key}) : super(key: key);
 
   @override
-  State<CarbonFootprintTrackingScreen> createState() =>
-      _CarbonFootprintTrackingScreenState();
+  _CarbonTrackingScreenState createState() => _CarbonTrackingScreenState();
 }
 
-class _CarbonFootprintTrackingScreenState
-    extends State<CarbonFootprintTrackingScreen> {
-  static const Color _appBarColor = Color(0xFF69A56E);
-  static const Color _primaryTextColorDarkBg = Colors.white;
-  static const Color _scaffoldBgColor = Color(0xFFF0F2F0); 
-  static const Color _cardColor = Colors.white;
-  static const Color _primaryTextColorLightBg = Colors.black87;
-  static const Color _secondaryTextColorLightBg = Colors.black54;
-  static const Color _accentColor = Color(0xFF4CAF50); 
+class _CarbonTrackingScreenState extends State<CarbonTrackingScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  User? _user;
+  FirestoreService? _firestoreService;
 
-  User? _currentUser;
-  final FirestoreService _firestoreService = FirestoreService();
+  // Form state
+  final _formKey = GlobalKey<FormState>();
+  String? _selectedCategory;
+  String? _selectedActivity;
+  final TextEditingController _quantityController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
 
-  double _dailyFootprintKgCO2e = 0.0;
-  List<Map<String, dynamic>> _recentActivities = [];
+  final Map<String, List<String>> _activitiesByCategory = {
+    'Transport': ['Car (Gasoline)', 'Car (Diesel)', 'Motorbike', 'Bus', 'Train', 'Flight (Short Haul)', 'Flight (Long Haul)'],
+    'Household Energy': ['Electricity', 'Natural Gas', 'Heating Oil'],
+    'Food': ['Beef', 'Lamb', 'Pork', 'Chicken', 'Fish', 'Dairy', 'Vegetables', 'Fruits'],
+    'Goods & Services': ['Clothing', 'Electronics', 'Services'],
+  };
+
+  final Map<String, String> _activityUnits = {
+    'Car (Gasoline)': 'km',
+    'Car (Diesel)': 'km',
+    'Motorbike': 'km',
+    'Bus': 'km',
+    'Train': 'km',
+    'Flight (Short Haul)': 'km',
+    'Flight (Long Haul)': 'km',
+    'Electricity': 'kWh',
+    'Natural Gas': 'm³ or kWh',
+    'Heating Oil': 'litres',
+    'Beef': 'kg',
+    'Lamb': 'kg',
+    'Pork': 'kg',
+    'Chicken': 'kg',
+    'Fish': 'kg',
+    'Dairy': 'kg or L',
+    'Vegetables': 'kg',
+    'Fruits': 'kg',
+    'Clothing': 'items or spend',
+    'Electronics': 'items or spend',
+    'Services': 'spend'
+  };
 
   @override
   void initState() {
     super.initState();
-    _currentUser = FirebaseAuth.instance.currentUser;
-    _fetchFootprintData();
+    _user = _auth.currentUser;
+    if (_user != null) {
+      _firestoreService = FirestoreService(userId: _user!.uid);
+    } else {
+      print("User not logged in!");
+    }
   }
 
-  Future<void> _fetchFootprintData() async {
-    if (_currentUser == null) return;
+  Future<void> _logCarbonEntry() async {
+    if (_formKey.currentState!.validate()) {
+      if (_user == null || _firestoreService == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: User not logged in.')),
+        );
+        return;
+      }
+      if (_selectedCategory == null || _selectedActivity == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select category and activity.')),
+        );
+        return;
+      }
 
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    final logsSnapshot = await _firestoreService.getUserFootprintLogs(
-      userId: _currentUser!.uid,
-      from: startOfDay,
-      limit: 5,
+      double dummyCo2 = (double.tryParse(_quantityController.text) ?? 1.0) * 2.5; // Replace with real calculation if available
+
+      final entryData = {
+        'category': _selectedCategory,
+        'activity': _selectedActivity,
+        'quantity': double.tryParse(_quantityController.text) ?? 0.0,
+        'unit': _activityUnits[_selectedActivity!] ?? '',
+        'notes': _notesController.text,
+        'co2': dummyCo2,
+        'date': Timestamp.fromDate(_selectedDate),
+        'userId': _user!.uid,
+      };
+
+      try {
+        await _firestoreService!.addCarbonEntry(entryData);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Carbon entry logged successfully!')),
+        );
+        _formKey.currentState!.reset();
+        _quantityController.clear();
+        _notesController.clear();
+        setState(() {
+          _selectedCategory = null;
+          _selectedActivity = null;
+          _selectedDate = DateTime.now();
+        });
+        Navigator.of(context).pop();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to log entry: $e')),
+        );
+      }
+    }
+  }
+
+  void _showAddEntryDialog() {
+    _selectedCategory = null;
+    _selectedActivity = null;
+    _quantityController.clear();
+    _notesController.clear();
+    _selectedDate = DateTime.now();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.9,
+              minChildSize: 0.5,
+              maxChildSize: 0.9,
+              builder: (_, scrollController) {
+                return Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Form(
+                      key: _formKey,
+                      child: ListView(
+                        controller: scrollController,
+                        children: <Widget>[
+                          Text(
+                            'Log New Carbon Activity',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                                labelText: 'Category',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.category)),
+                            value: _selectedCategory,
+                            hint: const Text('Select Category'),
+                            items: _activitiesByCategory.keys.map((String category) {
+                              return DropdownMenuItem<String>(
+                                value: category,
+                                child: Text(category),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setModalState(() {
+                                _selectedCategory = newValue;
+                                _selectedActivity = null;
+                              });
+                            },
+                            validator: (value) => value == null ? 'Please select a category' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          if (_selectedCategory != null)
+                            DropdownButtonFormField<String>(
+                              decoration: const InputDecoration(
+                                  labelText: 'Activity',
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.local_activity)),
+                              value: _selectedActivity,
+                              hint: const Text('Select Activity'),
+                              items: (_activitiesByCategory[_selectedCategory!] ?? []).map((String activity) {
+                                return DropdownMenuItem<String>(
+                                  value: activity,
+                                  child: Text(activity),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                setModalState(() {
+                                  _selectedActivity = newValue;
+                                });
+                              },
+                              validator: (value) => value == null ? 'Please select an activity' : null,
+                            ),
+                          const SizedBox(height: 16),
+                          if (_selectedActivity != null)
+                            TextFormField(
+                              controller: _quantityController,
+                              decoration: InputDecoration(
+                                labelText: 'Quantity / Amount',
+                                border: const OutlineInputBorder(),
+                                prefixIcon: const Icon(Icons.format_list_numbered),
+                                suffixText: _activityUnits[_selectedActivity!] ?? '',
+                              ),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                              ],
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a quantity';
+                                }
+                                if (double.tryParse(value) == null) {
+                                  return 'Please enter a valid number';
+                                }
+                                return null;
+                              },
+                            ),
+                          const SizedBox(height: 16),
+                          ListTile(
+                            leading: const Icon(Icons.calendar_today),
+                            title: Text("Date: ${MaterialLocalizations.of(context).formatShortDate(_selectedDate)}"),
+                            trailing: const Icon(Icons.edit),
+                            onTap: () async {
+                              final DateTime? picked = await showDatePicker(
+                                context: context,
+                                initialDate: _selectedDate,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime.now().add(const Duration(days: 365)),
+                              );
+                              if (picked != null && picked != _selectedDate) {
+                                setModalState(() {
+                                  _selectedDate = picked;
+                                });
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _notesController,
+                            decoration: const InputDecoration(
+                              labelText: 'Notes (Optional)',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.note_alt_outlined),
+                            ),
+                            maxLines: 2,
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.save_alt_outlined),
+                            label: const Text('Log Entry'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF609966),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              textStyle: const TextStyle(fontSize: 16),
+                            ),
+                            onPressed: _logCarbonEntry,
+                          ),
+                          const SizedBox(height: 10),
+                          TextButton(
+                            child: const Text('Cancel'),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          }
+        );
+      },
     );
-
-    double totalCO2eToday = 0;
-    List<Map<String, dynamic>> activities = [];
-    for (var doc in logsSnapshot.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      totalCO2eToday += (data['co2e_kg'] as num? ?? 0.0);
-      activities.add({
-        'id': doc.id,
-        'title': data['activityTitle'] ?? 'Unknown Activity',
-        'value': data['co2e_kg'] != null ? "${(data['co2e_kg'] as num).toStringAsFixed(1)} kg CO2e" : "N/A",
-        'icon': _getIconForActivity(data['category'] ?? ''),
-        'timestamp': data['date'] as Timestamp?,
-      });
-    }
-    if (mounted) {
-      setState(() {
-        _dailyFootprintKgCO2e = totalCO2eToday;
-        _recentActivities = activities;
-      });
-    }
   }
 
-  IconData _getIconForActivity(String category) {
-    switch (category.toLowerCase()) {
-      case 'transport':
+  @override
+  Widget build(BuildContext context) {
+    final themeColor = const Color(0xFF609966);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Carbon Footprint Tracker'),
+        backgroundColor: themeColor,
+        elevation: 0,
+      ),
+      body: _user == null && _firestoreService == null
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 50, color: Colors.redAccent),
+                  SizedBox(height: 10),
+                  Text('Please log in to track your carbon footprint.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+                ],
+              )
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _buildTotalFootprintCard(themeColor),
+                  const SizedBox(height: 20),
+                  _buildPlaceholderChartCard(themeColor),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Recent Activities',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildRecentActivitiesList(),
+                ],
+              ),
+            ),
+      floatingActionButton: _user != null ? FloatingActionButton.extended(
+        onPressed: _showAddEntryDialog,
+        label: const Text('Log Activity'),
+        icon: const Icon(Icons.add_circle_outline),
+        backgroundColor: themeColor,
+      ) : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Widget _buildTotalFootprintCard(Color themeColor) {
+    return Card(
+      elevation: 4.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20.0),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [themeColor.withOpacity(0.8), themeColor],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your Estimated Monthly Footprint',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white70),
+            ),
+            const SizedBox(height: 8),
+            StreamBuilder<double>(
+              stream: _firestoreService?.getTotalCarbonFootprint() ?? Stream.value(0.0),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 40,
+                    width: 40,
+                    child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Text('Error', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold));
+                }
+                final totalFootprint = snapshot.data ?? 0.0;
+                return Text(
+                  '${totalFootprint.toStringAsFixed(1)} kg CO₂e',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                );
+              },
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Keep logging to improve accuracy!',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white60),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+Widget _buildPlaceholderChartCard(Color themeColor) {
+  return Card(
+    elevation: 2.0,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Footprint Breakdown',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 200,
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _firestoreService?.getRecentCarbonEntries(limit: 100) ?? Stream.value([]),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error loading chart'));
+                }
+                final entries = snapshot.data ?? [];
+                if (entries.isEmpty) {
+                  return Center(child: Text('No data yet'));
+                }
+
+                // Aggregate CO2 by category
+                final Map<String, double> categoryTotals = {};
+                for (var entry in entries) {
+                  final category = entry['category'] ?? 'Other';
+                  final co2 = (entry['co2'] as num?)?.toDouble() ?? 0.0;
+                  categoryTotals[category] = (categoryTotals[category] ?? 0) + co2;
+                }
+
+                final categories = categoryTotals.keys.toList();
+                final values = categoryTotals.values.toList();
+
+                return BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: (values.isNotEmpty) ? (values.reduce((a, b) => a > b ? a : b) * 1.2) : 10,
+                    barTouchData: BarTouchData(enabled: true),
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (double value, TitleMeta meta) {
+                            final idx = value.toInt();
+                            if (idx < 0 || idx >= categories.length) return const SizedBox();
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                categories[idx].split(' ').first,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            );
+                          },
+                          reservedSize: 40,
+                        ),
+                      ),
+                      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: List.generate(categories.length, (i) {
+                      return BarChartGroupData(
+                        x: i,
+                        barRods: [
+                          BarChartRodData(
+                            toY: values[i],
+                            color: themeColor,
+                            width: 22,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Shows your CO₂e by category.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+  Widget _buildRecentActivitiesList() {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _firestoreService?.getRecentCarbonEntries(limit: 5) ?? Stream.value([]),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error fetching activities: ${snapshot.error}'));
+        }
+        final activities = snapshot.data ?? [];
+        if (activities.isEmpty) {
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(child: Text('No activities logged yet. Tap + to add one!')),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: activities.length,
+          itemBuilder: (context, index) {
+            final activity = activities[index];
+            final date = (activity['date'] as Timestamp?)?.toDate() ?? DateTime.now();
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 6.0),
+              elevation: 1.5,
+              child: ListTile(
+                leading: Icon(_getIconForCategory(activity['category'] as String?), color: const Color(0xFF609966)),
+                title: Text(
+                  '${activity['activity'] ?? 'Unknown Activity'}',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text(
+                  '${activity['notes'] ?? activity['category']}\n${MaterialLocalizations.of(context).formatShortDate(date)}',
+                ),
+                trailing: Text(
+                  '${(activity['co2'] as num?)?.toStringAsFixed(1) ?? '0.0'} kg CO₂e',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF609966)),
+                ),
+                isThreeLine: true,
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  IconData _getIconForCategory(String? category) {
+    switch (category) {
+      case 'Transport':
         return Icons.directions_car;
-      case 'energy':
-      case 'home energy':
+      case 'Household Energy':
         return Icons.lightbulb_outline;
-      case 'food':
-        return Icons.restaurant_menu;
-      case 'waste':
-        return Icons.delete_outline;
+      case 'Food':
+        return Icons.restaurant;
+      case 'Goods & Services':
+        return Icons.shopping_bag_outlined;
       default:
         return Icons.eco;
     }
   }
 
-  void _navigateToLogActivity(String category) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => LogActivityScreen(category: category),
-      ),
-    ).then((_) => _fetchFootprintData());
-  }
-
   @override
-  Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light.copyWith(
-      statusBarColor: _appBarColor,
-      statusBarIconBrightness: Brightness.light,
-    ));
-
-    String userName = _currentUser?.displayName ?? _currentUser?.email?.split('@')[0] ?? "User";
-
-    return Scaffold(
-      backgroundColor: _scaffoldBgColor,
-      appBar: _buildAppBar(context, userName),
-      body: RefreshIndicator(
-        onRefresh: _fetchFootprintData,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            _buildFootprintSummaryCard(),
-            const SizedBox(height: 20),
-            _buildSectionTitle("Log New Activity"),
-            const SizedBox(height: 10),
-            _buildActivityLoggingGrid(),
-            const SizedBox(height: 20),
-            _buildSectionTitle("Recent Activities"),
-            const SizedBox(height: 10),
-            _buildRecentActivitiesList(),
-          ],
-        ),
-      ),
-    );
+  void dispose() {
+    _quantityController.dispose();
+    _notesController.dispose();
+    super.dispose();
   }
-
-  AppBar _buildAppBar(BuildContext context, String userName) {
-    return AppBar(
-      backgroundColor: _appBarColor,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: _primaryTextColorDarkBg),
-        onPressed: () => Navigator.of(context).pop(),
-      ),
-      title: const Text(
-        'Carbon Footprint Tracking',
-        style: TextStyle(color: _primaryTextColorDarkBg, fontWeight: FontWeight.bold),
-      ),
-      actions: [
-        // Center(
-        //   child: Padding(
-        //     padding: const EdgeInsets.only(right: 8.0),
-        //     child: Text(
-        //       userName,
-        //       style: const TextStyle(color: _primaryTextColorDarkBg, fontSize: 16),
-        //     ),
-        //   ),
-        // ),
-        // Padding(
-        //   padding: const EdgeInsets.only(right: 16.0),
-        //   child: CircleAvatar(
-        //     backgroundColor: Colors.white,
-        //     child: Icon(Icons.person, color: _appBarColor.withOpacity(0.8), size: 24),
-        //     radius: 18,
-        //   ),
-        // ),
-      ],
-    );
-  }
-
-  Widget _buildFootprintSummaryCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: _cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Today's Estimated Footprint",
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryTextColorLightBg),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  _dailyFootprintKgCO2e.toStringAsFixed(1),
-                  style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: _accentColor),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  "kg CO₂e",
-                  style: TextStyle(
-                      fontSize: 18,
-                      color: _secondaryTextColorLightBg,
-                      fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Track your activities to see your impact.",
-              style: TextStyle(fontSize: 14, color: _secondaryTextColorLightBg),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: _primaryTextColorLightBg.withOpacity(0.8)),
-    );
-  }
-
-  Widget _buildActivityLoggingGrid() {
-    final categories = [
-      {"name": "Transport", "icon": Icons.directions_car_filled_outlined},
-      {"name": "Home Energy", "icon": Icons.lightbulb_outline_rounded},
-      {"name": "Food", "icon": Icons.restaurant_menu_outlined},
-      {"name": "Waste", "icon": Icons.delete_sweep_outlined},
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.8,
-      ),
-      itemCount: categories.length,
-      itemBuilder: (context, index) {
-        final category = categories[index];
-        return Card(
-          elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          color: _cardColor,
-          child: InkWell(
-            onTap: () => _navigateToLogActivity(category["name"] as String),
-            borderRadius: BorderRadius.circular(10),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(category["icon"] as IconData, size: 36, color: _accentColor),
-                  const SizedBox(height: 8),
-                  Text(
-                    category["name"] as String,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: _primaryTextColorLightBg),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildRecentActivitiesList() {
-      if (_recentActivities.isEmpty) {
-        return Card(
-          elevation: 1,
-          color: _cardColor,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              "No activities logged recently. Start tracking!",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: _secondaryTextColorLightBg, fontSize: 15),
-            ),
-          ),
-        );
-      }
-
-      return ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: _recentActivities.length,
-        itemBuilder: (context, index) {
-          final activity = _recentActivities[index];
-          final date = activity['timestamp'] != null
-              ? (activity['timestamp'] as Timestamp).toDate()
-              : null;
-          final formattedDate = date != null ? "${date.day}/${date.month}/${date.year}" : "";
-
-          return Card(
-            elevation: 1,
-            margin: const EdgeInsets.only(bottom: 8),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            color: _cardColor,
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: _accentColor.withOpacity(0.1),
-                child: Icon(activity['icon'] as IconData, color: _accentColor, size: 24),
-              ),
-              title: Text(activity['title'] as String, style: TextStyle(fontWeight: FontWeight.w500, color: _primaryTextColorLightBg)),
-              subtitle: Text(formattedDate, style: TextStyle(color: _secondaryTextColorLightBg, fontSize: 12)),
-              trailing: PopupMenuButton<String>(
-                onSelected: (value) async {
-                  if (value == 'edit') {
-                    _showEditLogDialog(activity);
-                  } else if (value == 'delete') {
-                    await _firestoreService.deleteUserFootprintLog(activity['id']);
-                    _fetchFootprintData();
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-    }
-
-     void _showEditLogDialog(Map<String, dynamic> activity) {
-    final titleController = TextEditingController(text: activity['title']);
-    final valueController = TextEditingController(
-      text: (activity['value'] as String).split(' ').first, 
-    );
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Log'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Activity Title'),
-              ),
-              TextField(
-                controller: valueController,
-                decoration: const InputDecoration(labelText: 'CO₂e (kg)'),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final newTitle = titleController.text.trim();
-                final newValue = double.tryParse(valueController.text.trim());
-                if (newTitle.isNotEmpty && newValue != null) {
-                  await _firestoreService.updateUserFootprintLog(
-                    docId: activity['id'],
-                    data: {
-                      'activityTitle': newTitle,
-                      'co2e_kg': newValue,
-                    },
-                  );
-                  Navigator.pop(context);
-                  _fetchFootprintData();
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
 }

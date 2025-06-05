@@ -173,13 +173,13 @@ class HomeScreen extends StatelessWidget {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
           }),
           _buildGridItem(context, recycleIcon, 'Recycle', () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const RecycleScreen()));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
           }),
           _buildGridItem(context, educationIcon, 'Climate Education', () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
           }),
           _buildGridItem(context, footprintIcon, 'Carbon Footprint\nTracking', () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const CarbonFootprintTrackingScreen()));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const CarbonTrackingScreen()));
           }),
           _buildGridItem(context, weatherIcon, 'Weather', () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));

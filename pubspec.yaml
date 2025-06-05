@@ -22,6 +22,7 @@ dependencies:
   dotted_border: ^2.1.0 # Or latest
   permission_handler: ^11.3.0 # Or latest
   cupertino_icons: ^1.0.2
+  fl_chart: ^0.63.0
 
 dev_dependencies:
   flutter_test:
