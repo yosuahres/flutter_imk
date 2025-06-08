@@ -1,22 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fp_imk/screens/auth/login.dart';
+import 'package:fp_imk/screens/profile/edit_profile_screen.dart';
+import 'package:fp_imk/db/firestore.dart'; // Import FirestoreService
+import 'package:cloud_firestore/cloud_firestore.dart'; // For QuerySnapshot
+import 'package:fp_imk/screens/profile/app_settings_screen.dart'; // Import AppSettingsScreen
+import 'package:fp_imk/screens/profile/help_support_screen.dart'; // Import HelpSupportScreen
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
   @override
-  // _RecycleState createState() => _RecycleState(); // Corrected this to match the class name
   _ProfileScreenState createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // Dummy data - replace with actual user data from your state management/backend
-  final String _userName = "Jane EcoWarrior";
-  final String _userEmail = "jane.eco@example.com";
-  final String _profileImageUrl = "https://i.pravatar.cc/150?img=5"; // Placeholder image
-  final double _co2Saved = 125.7; // in kg
-  final int _itemsRecycled = 88;
+  // These will be fetched dynamically
+  // final String _userName = "Jane EcoWarrior";
+  // final String _userEmail = "jane.eco@example.com";
+  // final String _profileImageUrl = "https://i.pravatar.cc/150?img=5";
+
   final int _educationModulesCompleted = 5;
   final String _ecoStatus = "Eco Champion";
+
+  FirestoreService? _firestoreService;
+
+  @override
+  void initState() {
+    super.initState();
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _firestoreService = FirestoreService(userId: user.uid);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,72 +53,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: double.infinity, // Add this line
             padding: const EdgeInsets.all(20.0),
             color: primaryColor,
-              child: Column(
-                children: <Widget>[
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.white.withOpacity(0.8),
-                    backgroundImage: NetworkImage(_profileImageUrl),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _userName,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _userEmail,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: Implement edit profile navigation/logic
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Edit Profile Tapped!')),
-                      );
-                    },
-                    icon: const Icon(Icons.edit, size: 18),
-                    label: const Text('Edit Profile'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: accentColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+              child: StreamBuilder<DocumentSnapshot>(
+                stream: _firestoreService?.getUserDataStream(), // Assuming you add this method to FirestoreService
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator(color: Colors.white);
+                  }
+                  if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white));
+                  }
+                  final userData = snapshot.data?.data() as Map<String, dynamic>?;
+                  final userName = userData?['username'] ?? 'User Name';
+                  final userEmail = FirebaseAuth.instance.currentUser?.email ?? 'user@example.com';
+                  final profileImageUrl = userData?['profileImageUrl'] ?? 'https://i.pravatar.cc/150?img=5'; // Default placeholder
+
+                  return Column(
+                    children: <Widget>[
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.white.withOpacity(0.8),
+                        backgroundImage: NetworkImage(profileImageUrl),
                       ),
-                    ),
-                  ),
-                ],
+                      const SizedBox(height: 12),
+                      Text(
+                        userName,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        userEmail,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                          );
+                        },
+                        icon: const Icon(Icons.edit, size: 18),
+                        label: const Text('Edit Profile'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accentColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
 
             // --- Eco Status/Summary ---
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
-              color: Colors.grey[100],
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.shield_moon_outlined, color: primaryColor, size: 30),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Status: $_ecoStatus',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // Container(
+            //   padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
+            //   color: Colors.grey[100],
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.center,
+            //     children: [
+            //       Icon(Icons.shield_moon_outlined, color: primaryColor, size: 30),
+            //       const SizedBox(width: 10),
+            //       Text(
+            //         'Status: $_ecoStatus',
+            //         style: TextStyle(
+            //           fontSize: 18,
+            //           fontWeight: FontWeight.w600,
+            //           color: primaryColor,
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
 
             const SizedBox(height: 20),
 
@@ -121,19 +153,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  _buildStatCard(
-                    context,
-                    icon: Icons.eco_outlined,
-                    title: 'Carbon Footprint Reduced',
-                    value: '${_co2Saved.toStringAsFixed(1)} kg CO₂e',
-                    iconColor: Colors.green.shade600,
+                  StreamBuilder<double>(
+                    stream: _firestoreService?.getTotalCarbonFootprint() ?? Stream.value(0.0),
+                    builder: (context, snapshot) {
+                      final co2Saved = snapshot.data ?? 0.0;
+                      return _buildStatCard(
+                        context,
+                        icon: Icons.eco_outlined,
+                        title: 'Carbon Footprint Reduced',
+                        value: '${co2Saved.toStringAsFixed(1)} kg CO₂e',
+                        iconColor: Colors.green.shade600,
+                      );
+                    },
                   ),
-                  _buildStatCard(
-                    context,
-                    icon: Icons.recycling_outlined,
-                    title: 'Items Recycled',
-                    value: '$_itemsRecycled items',
-                    iconColor: Colors.blue.shade600,
+                  StreamBuilder<QuerySnapshot>(
+                    stream: _firestoreService?.getRecyclingStatsThisMonth() ?? Stream.empty(),
+                    builder: (context, snapshot) {
+                      final itemsRecycled = snapshot.data?.docs.length ?? 0;
+                      return _buildStatCard(
+                        context,
+                        icon: Icons.recycling_outlined,
+                        title: 'Items Recycled',
+                        value: '$itemsRecycled items',
+                        iconColor: Colors.blue.shade600,
+                      );
+                    },
                   ),
                   _buildStatCard(
                     context,
@@ -170,9 +214,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.settings_outlined,
                     title: 'App Settings',
                     onTap: () {
-                      // TODO: Navigate to settings screen
-                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('App Settings Tapped!')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AppSettingsScreen()),
                       );
                     },
                   ),
@@ -180,19 +224,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.notifications_outlined,
                     title: 'Notifications',
                     onTap: () {
-                      // TODO: Navigate to notification settings
-                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Notifications Tapped!')),
-                      );
+                      // Logic for Notifications (still unknown)
                     },
                   ),
                   _buildActionItem(
                     icon: Icons.help_outline,
                     title: 'Help & Support',
                     onTap: () {
-                      // TODO: Navigate to help screen or show a dialog
-                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Help & Support Tapped!')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const HelpSupportScreen()),
                       );
                     },
                   ),
@@ -200,9 +241,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.info_outline,
                     title: 'About App',
                     onTap: () {
-                      // TODO: Show about dialog
-                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('About App Tapped!')),
+                      showAboutDialog(
+                        context: context,
+                        applicationName: 'Ikling',
+                        applicationVersion: '1.0.0',
+                        applicationLegalese: '© 2024 Ikling. All rights reserved.',
+                        children: <Widget>[
+                          Padding(
+                            padding: const EdgeInsets.only(top: 15.0),
+                            child: Text(
+                              'Ikling is an application dedicated to helping you track your carbon footprint, recycle, and learn about climate education.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -210,10 +263,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.logout,
                     title: 'Logout',
                     color: Colors.red,
-                    onTap: () {
-                      // TODO: Implement logout logic
-                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Logout Tapped!')),
+                    onTap: () async {
+                      await FirebaseAuth.instance.signOut();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
                       );
                     },
                   ),

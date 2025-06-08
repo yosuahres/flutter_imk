@@ -107,6 +107,14 @@ class _RecycleScreenState extends State<RecycleScreen> {
       try {
         await _firestoreService!.addRecycledItem(itemData);
 
+        // Add notification for recycled item
+        await _firestoreService!.addNotification({
+          'title': 'Item Recycled!',
+          'body': 'You recycled ${(itemData['quantity'] as num?)?.toString() ?? 'N/A'} ${itemData['unit'] ?? ''} of ${(itemData['itemName'] as String?)?.isNotEmpty == true ? itemData['itemName'] : itemData['itemType'] ?? 'Unknown Item'}.',
+          'type': 'recycle_log',
+          'timestamp': Timestamp.now(),
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Recycled item logged successfully!')),
         );
@@ -490,7 +498,7 @@ class _RecycleScreenState extends State<RecycleScreen> {
               child: ListTile(
                 leading: Icon(_getIconForItemType(activity['itemType'] as String?), color: const Color(0xFF609966)),
                 title: Text(
-                  '${activity['itemName']?.isNotEmpty == true ? activity['itemName'] : activity['itemType'] ?? 'Unknown Item'}',
+                  '${(activity['itemName'] as String?)?.isNotEmpty == true ? activity['itemName'] : activity['itemType'] ?? 'Unknown Item'}',
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
                 subtitle: Text(

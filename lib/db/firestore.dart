@@ -46,6 +46,32 @@ class FirestoreService {
     });
   }
 
+  // --- User Profile Methods ---
+  Stream<DocumentSnapshot> getUserDataStream() {
+    return FirebaseFirestore.instance.collection('users').doc(userId).snapshots();
+  }
+
+  // --- Notifications Methods ---
+  Future<void> addNotification(Map<String, dynamic> notificationData) async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .add(notificationData);
+  }
+
+  Stream<List<Map<String, dynamic>>> getRecentNotifications({int limit = 5}) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .orderBy('timestamp', descending: true) // Assuming a 'timestamp' field
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => doc.data()).toList());
+  }
+
   // --- Recycling Methods ---
   Future<void> addRecycledItem(Map<String, dynamic> itemData) async {
     await FirebaseFirestore.instance

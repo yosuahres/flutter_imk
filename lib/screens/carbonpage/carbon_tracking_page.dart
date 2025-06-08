@@ -97,6 +97,15 @@ class _CarbonTrackingScreenState extends State<CarbonTrackingScreen> {
 
       try {
         await _firestoreService!.addCarbonEntry(entryData);
+        
+        // Add notification for carbon entry
+        await _firestoreService!.addNotification({
+          'title': 'Carbon Footprint Logged!',
+          'body': 'You logged ${dummyCo2.toStringAsFixed(1)} kg CO₂e for ${_selectedActivity ?? _selectedCategory}.',
+          'type': 'carbon_log',
+          'timestamp': Timestamp.now(),
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Carbon entry logged successfully!')),
         );

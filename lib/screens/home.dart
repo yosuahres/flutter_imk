@@ -5,10 +5,28 @@ import 'package:fp_imk/screens/profile.dart';
 import 'package:fp_imk/screens/recyclepage/recycle.dart';
 import 'package:fp_imk/screens/weather_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; 
+import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // For DocumentSnapshot
+import 'package:fp_imk/db/firestore.dart'; // Import FirestoreService
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  FirestoreService? _firestoreService;
+
+  @override
+  void initState() {
+    super.initState();
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _firestoreService = FirestoreService(userId: user.uid);
+    }
+  }
 
   static const Color _appHeaderColor = Color(0xFF609966);
   static const Color _statusBannerColor = Color(0xFFE9F5DB);
@@ -36,32 +54,51 @@ class HomeScreen extends StatelessWidget {
 
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+      builder: (context, authSnapshot) {
+        if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        if (snapshot.hasData) {
-          String userName = snapshot.data?.displayName ?? snapshot.data?.email?.split('@')[0] ?? "User";
-          if (userName == "User" && snapshot.data?.email == null) userName = "None";
+        if (authSnapshot.hasData) {
+          // Now fetch user data from Firestore
+          return StreamBuilder<DocumentSnapshot>(
+            stream: _firestoreService?.getUserDataStream(),
+            builder: (context, userDocSnapshot) {
+              if (userDocSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (userDocSnapshot.hasError) {
+                return Scaffold(
+                  body: Center(child: Text('Error: ${userDocSnapshot.error}')),
+                );
+              }
 
-          return Scaffold(
-            backgroundColor: _scaffoldBgColor,
-            body: SafeArea(
-              top: false,
-              child: Column(
-                children: [
-                  _buildHeader(context, userName),
-                  _buildStatusBanner(),
-                  Expanded(child: _buildGrid(context)), 
-                ],
-              ),
-            ),
-            bottomNavigationBar: Padding(
-              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 8),
-              child: _buildBottomNavigationBar(context),
-            ),
+              final userData = userDocSnapshot.data?.data() as Map<String, dynamic>?;
+              final userName = userData?['username'] ?? authSnapshot.data?.displayName ?? authSnapshot.data?.email?.split('@')[0] ?? "User";
+              // If no email and no display name, default to "None"
+              final displayUserName = (userName == "User" && authSnapshot.data?.email == null) ? "None" : userName;
+
+              return Scaffold(
+                backgroundColor: _scaffoldBgColor,
+                body: SafeArea(
+                  top: false,
+                  child: Column(
+                    children: [
+                      _buildHeader(context, displayUserName),
+                      _buildStatusBanner(),
+                      Expanded(child: _buildGrid(context)),
+                    ],
+                  ),
+                ),
+                bottomNavigationBar: Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 8),
+                  child: _buildBottomNavigationBar(context),
+                ),
+              );
+            },
           );
         } else {
           return const LoginScreen();
