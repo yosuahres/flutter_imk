@@ -1,41 +1,205 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fp_imk/db/firestore.dart';
+import 'package:fp_imk/widgets/custom_bottom_nav_bar.dart';
+import 'package:fp_imk/screens/home.dart';
+import 'package:fp_imk/screens/notification/notification_screen.dart';
+import 'package:fp_imk/screens/profile.dart';
+import 'package:flutter/services.dart'; // For SystemChrome
+import 'package:provider/provider.dart'; // Import provider
+import 'package:fp_imk/providers/theme_provider.dart'; // Import theme provider
 
-class AppSettingsScreen extends StatelessWidget {
+class AppSettingsScreen extends StatefulWidget {
   const AppSettingsScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final Color primaryColor = const Color(0xFF2E7D6E);
+  State<AppSettingsScreen> createState() => _AppSettingsScreenState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('App Settings'),
-        backgroundColor: primaryColor,
-        elevation: 0,
-      ),
-      body: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+class _AppSettingsScreenState extends State<AppSettingsScreen> {
+  bool _isNotificationsEnabled = true;
+  bool _isDarkModeEnabled = false;
+  late SharedPreferences _prefs;
+  FirestoreService? _firestoreService;
+  int _selectedIndex = 2; // Settings is the 3rd tab (index 2)
+
+  static const Color _appHeaderColor = Color(0xFF609966);
+  static const Color _primaryTextColor = Colors.white;
+  static const Color _scaffoldBgColor = Color(0xFFF0F2F0);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _firestoreService = FirestoreService(userId: user.uid);
+    }
+  }
+
+  Future<void> _loadSettings() async {
+    _prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isNotificationsEnabled = _prefs.getBool('isNotificationsEnabled') ?? true;
+      _isDarkModeEnabled = _prefs.getBool('isDarkModeEnabled') ?? false;
+    });
+  }
+
+  Future<void> _saveSetting(String key, bool value) async {
+    await _prefs.setBool(key, value);
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Handle navigation based on index
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomeScreen()));
+        break;
+      case 1:
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NotificationScreen()));
+        break;
+      case 2:
+        // Already on Settings, do nothing
+        break;
+    }
+  }
+
+  Widget _buildHeader(BuildContext context, String userName) {
+    return Container(
+      padding: const EdgeInsets.only(top: 16.0 + kToolbarHeight / 3, left: 16.0, right: 16.0, bottom: 16.0),
+      color: _appHeaderColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end, // Align to end for profile
             children: [
-              Icon(Icons.settings, size: 60, color: Colors.grey),
-              SizedBox(height: 20),
               Text(
-                'This is the App Settings page.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: Colors.black87),
+                userName,
+                style: const TextStyle(color: _primaryTextColor, fontSize: 16),
               ),
-              SizedBox(height: 10),
-              Text(
-                'Future settings options will appear here.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context, MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  );
+                },
+                child: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.person, color: _appHeaderColor.withOpacity(0.8), size: 24,),
+                  radius: 18,
+                ),
               ),
             ],
           ),
-        ),
+        ],
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: _appHeaderColor,
+      statusBarIconBrightness: Brightness.light,
+    ));
+
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, authSnapshot) {
+        if (authSnapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (authSnapshot.hasData) {
+          return StreamBuilder<DocumentSnapshot>(
+            stream: _firestoreService?.getUserDataStream(),
+            builder: (context, userDocSnapshot) {
+              if (userDocSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (userDocSnapshot.hasError) {
+                return Scaffold(
+                  body: Center(child: Text('Error: ${userDocSnapshot.error}')),
+                );
+              }
+
+              final userData = userDocSnapshot.data?.data() as Map<String, dynamic>?;
+              final userName = userData?['username'] ?? authSnapshot.data?.displayName ?? authSnapshot.data?.email?.split('@')[0] ?? "User";
+              final displayUserName = (userName == "User" && authSnapshot.data?.email == null) ? "None" : userName;
+
+              return Scaffold(
+                backgroundColor: _scaffoldBgColor,
+                body: SafeArea(
+                  top: false,
+                  child: Column(
+                    children: [
+                      _buildHeader(context, displayUserName),
+                      Expanded(
+                        child: ListView(
+                          children: [
+                            SwitchListTile(
+                              title: const Text('Enable Notifications'),
+                              value: _isNotificationsEnabled,
+                              onChanged: (bool value) {
+                                setState(() {
+                                  _isNotificationsEnabled = value;
+                                });
+                                _saveSetting('isNotificationsEnabled', value);
+                              },
+                              secondary: const Icon(Icons.notifications),
+                            ),
+                            SwitchListTile(
+                              title: const Text('Dark Mode'),
+                              value: _isDarkModeEnabled,
+                              onChanged: (bool value) {
+                                setState(() {
+                                  _isDarkModeEnabled = value;
+                                });
+                                _saveSetting('isDarkModeEnabled', value);
+                                Provider.of<ThemeProvider>(context, listen: false).toggleTheme(value);
+                              },
+                              secondary: const Icon(Icons.dark_mode),
+                            ),
+                            ListTile(
+                              title: const Text('Data Usage'),
+                              subtitle: const Text('View information about your data consumption'),
+                              leading: const Icon(Icons.data_usage),
+                              onTap: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Data Usage details coming soon!')),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                bottomNavigationBar: Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 8),
+                  child: CustomBottomNavBar(
+                    selectedIndex: _selectedIndex,
+                    onItemTapped: _onItemTapped,
+                  ),
+                ),
+              );
+            },
+          );
+        } else {
+          return const Text('Please log in to view settings.'); // Or navigate to LoginScreen
+        }
+      },
     );
   }
 }

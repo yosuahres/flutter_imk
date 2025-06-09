@@ -4,10 +4,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fp_imk/screens/profile.dart';
 import 'package:fp_imk/screens/recyclepage/recycle.dart';
 import 'package:fp_imk/screens/weather_page.dart';
+import 'package:fp_imk/screens/notification/notification_screen.dart';
+import 'package:fp_imk/screens/carbonpage/carbon_tracking_page.dart';
+import 'package:fp_imk/screens/auth/login.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fp_imk/screens/profile.dart';
+import 'package:fp_imk/screens/recyclepage/recycle.dart';
+import 'package:fp_imk/screens/weather_page.dart';
+import 'package:fp_imk/screens/notification/notification_screen.dart';
+import 'package:fp_imk/screens/profile/app_settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // For DocumentSnapshot
 import 'package:fp_imk/db/firestore.dart'; // Import FirestoreService
+import 'package:fp_imk/widgets/custom_bottom_nav_bar.dart'; // Import the new custom nav bar
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +28,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   FirestoreService? _firestoreService;
+  int _selectedIndex = 0; // Add selected index for bottom nav bar
 
   @override
   void initState() {
@@ -31,7 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
   static const Color _appHeaderColor = Color(0xFF609966);
   static const Color _statusBannerColor = Color(0xFFE9F5DB);
   static const Color _cardColor = Color(0xFFC5E1A5);
-  static const Color _bottomNavColor = Color(0xFF386641);
   static const Color _scaffoldBgColor = Color(0xFFF0F2F0);
   static const Color _primaryTextColor = Colors.white;
   static const Color _secondaryTextColor = Color(0xFF333333);
@@ -43,6 +53,24 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (context) => const LoginScreen()),
       (Route<dynamic> route) => false,
     );
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Handle navigation based on index
+    switch (index) {
+      case 0:
+        // Already on Home, do nothing or pop to root
+        break;
+      case 1:
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationScreen()));
+        break;
+      case 2:
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const AppSettingsScreen()));
+        break;
+    }
   }
 
   @override
@@ -95,7 +123,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 bottomNavigationBar: Padding(
                   padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 8),
-                  child: _buildBottomNavigationBar(context),
+                  child: CustomBottomNavBar(
+                    selectedIndex: _selectedIndex,
+                    onItemTapped: _onItemTapped,
+                  ),
                 ),
               );
             },
@@ -249,71 +280,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _bottomNavColor,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            spreadRadius: 1,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildBottomNavItem(Icons.home, 'Home', true, () {
-
-            }),
-            _buildBottomNavItem(Icons.notifications_outlined, 'Notification', false, () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
-            }),
-            _buildBottomNavItem(Icons.settings_outlined, 'Settings', false, () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavItem(IconData icon, String label, bool isSelected, VoidCallback onTap) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? _primaryTextColor : _primaryTextColor.withOpacity(0.7),
-                size: 26,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? _primaryTextColor : _primaryTextColor.withOpacity(0.7),
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
