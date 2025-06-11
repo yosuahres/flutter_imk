@@ -14,6 +14,8 @@ import 'package:fp_imk/screens/weather_page.dart';
 import 'package:fp_imk/screens/carbonpage/carbon_tracking_page.dart';
 import 'package:fp_imk/screens/recyclepage/recycle.dart';
 import 'package:fp_imk/screens/profile.dart';
+import 'package:fp_imk/screens/edupage/quiz_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +71,7 @@ class MyApp extends StatelessWidget {
             'carbon': (context) => const CarbonTrackingScreen(),
             'recycle': (context) => const RecycleScreen(),
             'profile': (context) => const ProfileScreen(),
+            'education': (context) => const QuizScreen(),
           },
         );
       },

@@ -18,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // For DocumentSnapshot
 import 'package:fp_imk/db/firestore.dart'; // Import FirestoreService
 import 'package:fp_imk/widgets/custom_bottom_nav_bar.dart'; // Import the new custom nav bar
+import 'package:fp_imk/screens/edupage/quiz_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -243,8 +244,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildGridItem(context, recycleIcon, 'Recycle', () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const RecycleScreen()));
           }),
-          _buildGridItem(context, educationIcon, 'Climate Education', () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
+          _buildGridItem(context, educationIcon, 'Climate\nEducation', () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const QuizScreen()));
           }),
           _buildGridItem(context, footprintIcon, 'Carbon Footprint\nTracking', () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const CarbonTrackingScreen()));

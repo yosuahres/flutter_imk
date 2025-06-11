@@ -39,3 +39,5 @@ flutter:
     - assets/rain.json
     - assets/sunny.json
     - assets/storm.json
+    - assets/coral_bleaching.jpg
+    - assets/deforestation.jpg
