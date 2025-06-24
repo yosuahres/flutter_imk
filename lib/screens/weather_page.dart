@@ -72,26 +72,80 @@ class _WeatherPageState extends State<WeatherPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.lightGreen[900],
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // city name
-            Text(_weather?.cityName ?? "loading city..."),
+      backgroundColor: const Color(0xFF386641),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // City name (placeholder if loading)
+                Text(
+                  _weather?.cityName ?? 'Loading city...',
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
 
-            // animation
-            // Lottie.asset('assets/rain.json'),
-            Lottie.asset(getWeatherAnimation(_weather?.mainCondition)),
-        
-            // temperature
-            Text('${_weather?.temperature.round()}°C'),
+                const SizedBox(height: 20),
 
-            // weather condition
-            Text(_weather?.mainCondition ?? "loading weather...")
-          ],
+                // Weather animation (placeholder sunny)
+                SizedBox(
+                  height: 180,
+                  child: Lottie.asset(
+                    getWeatherAnimation(_weather?.mainCondition),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Weather Info Card with placeholders
+                Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  color: Colors.white,
+                  elevation: 8,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 32.0,
+                      horizontal: 24.0,
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          _weather != null
+                              ? '${_weather!.temperature.round()}°C'
+                              : 'Loading °C...',
+                          style: const TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF386641),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _weather?.mainCondition ?? 'Loading weather...',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF6A994E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
+
 }

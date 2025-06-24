@@ -41,3 +41,6 @@ flutter:
     - assets/storm.json
     - assets/coral_bleaching.jpg
     - assets/deforestation.jpg
+    - assets/melting_ice.jpg
+    - assets/plastic_pollution.jpg
+    - assets/smog_city.jpg
