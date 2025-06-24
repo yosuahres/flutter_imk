@@ -152,6 +152,52 @@ class _CarbonTrackingScreenState extends State<CarbonTrackingScreen> {
     }
   }
 
+  Future<void> _deleteCarbonEntry(String entryId, String activityName) async {
+    try {
+      // Show confirmation dialog
+      bool? shouldDelete = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Delete Activity'),
+            content: Text('Are you sure you want to delete "$activityName"?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (shouldDelete == true) {
+        await _firestoreService!.deleteCarbonEntry(entryId);
+        
+        // Add notification for deletion
+        await _firestoreService!.addNotification({
+          'title': 'Activity Deleted',
+          'body': 'You deleted the carbon activity: $activityName',
+          'type': 'carbon_delete',
+          'timestamp': Timestamp.now(),
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Activity deleted successfully!')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete activity: $e')),
+      );
+    }
+  }
+
   void _showAddEntryDialog() {
     _selectedCategory = null;
     _selectedActivity = null;
@@ -350,7 +396,10 @@ class _CarbonTrackingScreenState extends State<CarbonTrackingScreen> {
                   const SizedBox(height: 20),
                   Text(
                     'Recent Activities',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _buildRecentActivitiesList(),
@@ -548,6 +597,8 @@ Widget _buildPlaceholderChartCard(Color themeColor) {
           itemBuilder: (context, index) {
             final activity = activities[index];
             final date = (activity['date'] as Timestamp?)?.toDate() ?? DateTime.now();
+            final entryId = activity['id'] as String?;
+            
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 6.0),
               elevation: 1.5,
@@ -560,9 +611,22 @@ Widget _buildPlaceholderChartCard(Color themeColor) {
                 subtitle: Text(
                   '${activity['notes'] ?? activity['category']}\n${MaterialLocalizations.of(context).formatShortDate(date)}',
                 ),
-                trailing: Text(
-                  '${(activity['co2'] as num?)?.toStringAsFixed(1) ?? '0.0'} kg CO₂e',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF609966)),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${(activity['co2'] as num?)?.toStringAsFixed(1) ?? '0.0'} kg CO₂e',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF609966)),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      onPressed: entryId != null 
+                        ? () => _deleteCarbonEntry(entryId, activity['activity'] ?? 'Unknown Activity')
+                        : null,
+                      tooltip: 'Delete activity',
+                    ),
+                  ],
                 ),
                 isThreeLine: true,
               ),

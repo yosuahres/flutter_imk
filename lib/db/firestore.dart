@@ -28,6 +28,16 @@ class FirestoreService {
     debugPrint('FirestoreService: Notification added for carbon entry.');
   }
 
+  Future<void> deleteCarbonEntry(String entryId) async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('carbon_entries')
+        .doc(entryId)
+        .delete();
+    debugPrint('FirestoreService: Carbon entry deleted with ID: $entryId');
+  }
+
   Stream<List<Map<String, dynamic>>> getRecentCarbonEntries({int limit = 5}) {
     return FirebaseFirestore.instance
         .collection('users')
@@ -37,7 +47,10 @@ class FirestoreService {
         .limit(limit)
         .snapshots()
         .map((snapshot) =>
-            snapshot.docs.map((doc) => doc.data()).toList());
+            snapshot.docs.map((doc) => {
+              'id': doc.id,
+              ...doc.data(),
+            }).toList());
   }
 
   Stream<double> getTotalCarbonFootprint() {

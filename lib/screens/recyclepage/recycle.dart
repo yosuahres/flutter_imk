@@ -342,7 +342,7 @@ class _RecycleScreenState extends State<RecycleScreen> {
       padding: const EdgeInsets.only(bottom: 10.0, top: 8.0),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black),
       ),
     );
   }
@@ -425,7 +425,7 @@ class _RecycleScreenState extends State<RecycleScreen> {
           },
           body: Padding(
             padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
-            child: Text(item.body, textAlign: TextAlign.justify, style: TextStyle(height: 1.4)),
+            child: Text(item.body, textAlign: TextAlign.justify, style: TextStyle(height: 1.4, color: Colors.black)),
           ),
           isExpanded: item.isExpanded,
         );
@@ -454,7 +454,7 @@ class _RecycleScreenState extends State<RecycleScreen> {
               Expanded(
                 child: Text(
                   'Find Nearby Recycling Centers',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black),
                 ),
               ),
               const Icon(Icons.arrow_forward_ios, color: Colors.grey),
@@ -484,7 +484,7 @@ class _RecycleScreenState extends State<RecycleScreen> {
           return const Card(
             child: Padding(
               padding: EdgeInsets.all(16.0),
-              child: Center(child: Text('No recycled items logged yet. Tap + to add one!')),
+              child: Center(child: Text('No recycled items logged yet. Tap + to add one!', style: TextStyle(color: Colors.black))),
             ),
           );
         }
@@ -499,10 +499,11 @@ class _RecycleScreenState extends State<RecycleScreen> {
                 leading: Icon(_getIconForItemType(activity['itemType'] as String?), color: const Color(0xFF609966)),
                 title: Text(
                   '${(activity['itemName'] as String?)?.isNotEmpty == true ? activity['itemName'] : activity['itemType'] ?? 'Unknown Item'}',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+                  style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.black),
                 ),
                 subtitle: Text(
                   '${(activity['quantity'] as num?)?.toString() ?? 'N/A'} ${activity['unit'] ?? ''}\n${MaterialLocalizations.of(context).formatShortDate(date)}',
+                  style: const TextStyle(color: Colors.black),
                 ),
                 isThreeLine: true,
               ),
