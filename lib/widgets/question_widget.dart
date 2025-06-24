@@ -15,10 +15,10 @@ class QuestionWidget extends StatelessWidget {
     return Column(
       children: [
         Image.asset(imagePath, height: 200),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Text(
           questionText,
-          style: TextStyle(fontSize: 18),
+          style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color),
           textAlign: TextAlign.center,
         ),
       ],

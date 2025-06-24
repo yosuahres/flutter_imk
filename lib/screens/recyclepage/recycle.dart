@@ -257,7 +257,7 @@ class _RecycleScreenState extends State<RecycleScreen> {
                             label: const Text('Log Item'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF609966),
-                              foregroundColor: Colors.white,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
                               padding: const EdgeInsets.symmetric(vertical: 15),
                               textStyle: const TextStyle(fontSize: 16),
                             ),

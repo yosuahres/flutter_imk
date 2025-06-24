@@ -55,7 +55,7 @@ class _QuizScreenState extends State<QuizScreen> {
     final currentQuestion = _questions[_currentQuestionIndex];
 
     return Scaffold(
-      appBar: AppBar(title: Text('Climate Education Quiz')),
+      appBar: AppBar(title: const Text('Climate Education Quiz')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -64,7 +64,7 @@ class _QuizScreenState extends State<QuizScreen> {
               imagePath: currentQuestion.imagePath,
               questionText: currentQuestion.questionText,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ...currentQuestion.options.asMap().entries.map((entry) {
               int idx = entry.key;
               String text = entry.value;

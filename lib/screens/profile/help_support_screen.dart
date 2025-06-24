@@ -13,24 +13,24 @@ class HelpSupportScreen extends StatelessWidget {
         backgroundColor: primaryColor,
         elevation: 0,
       ),
-      body: const Center(
+      body: Center(
         child: Padding(
           padding: EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.help_outline, size: 60, color: Colors.grey),
+              Icon(Icons.help_outline, size: 60, color: Theme.of(context).iconTheme.color),
               SizedBox(height: 20),
               Text(
                 'Welcome to Help & Support!',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: Colors.black87),
+                style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
               SizedBox(height: 10),
               Text(
                 'Find answers to common questions or contact our support team here.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
               ),
             ],
           ),

@@ -166,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     userName,
-                    style: const TextStyle(color: _primaryTextColor, fontSize: 16),
+                    style: TextStyle(color: _primaryTextColor, fontSize: 16),
                   ),
                   const SizedBox(width: 8),
                   GestureDetector(
@@ -188,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 20),
           Text(
             'Welcome, $userName',
-            style: const TextStyle(
+            style: TextStyle(
                 color: _primaryTextColor,
                 fontSize: 28,
                 fontWeight: FontWeight.bold),

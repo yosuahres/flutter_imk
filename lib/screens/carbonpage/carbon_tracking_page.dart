@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -56,6 +57,8 @@ class _CarbonTrackingScreenState extends State<CarbonTrackingScreen> {
     'Services': 'spend'
   };
 
+  Map<String, Map<String, double>> _emissionFactors = {};
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +67,24 @@ class _CarbonTrackingScreenState extends State<CarbonTrackingScreen> {
       _firestoreService = FirestoreService(userId: _user!.uid);
     } else {
       print("User not logged in!");
+    }
+    _loadEmissionFactors();
+  }
+
+  Future<void> _loadEmissionFactors() async {
+    try {
+      final String response = await rootBundle.loadString('assets/carbon_emission_factors.json');
+      final data = await json.decode(response);
+      setState(() {
+        _emissionFactors = Map<String, Map<String, double>>.from(
+          data.map((key, value) => MapEntry(
+            key,
+            Map<String, double>.from(value.map((key2, value2) => MapEntry(key2, value2.toDouble()))),
+          )),
+        );
+      });
+    } catch (e) {
+      print('Error loading emission factors: $e');
     }
   }
 
@@ -82,7 +103,12 @@ class _CarbonTrackingScreenState extends State<CarbonTrackingScreen> {
         return;
       }
 
-      double dummyCo2 = (double.tryParse(_quantityController.text) ?? 1.0) * 2.5; // Replace with real calculation if available
+      double co2 = 0.0;
+      if (_emissionFactors.containsKey(_selectedCategory) &&
+          _emissionFactors[_selectedCategory]!.containsKey(_selectedActivity)) {
+        co2 = (double.tryParse(_quantityController.text) ?? 0.0) *
+            _emissionFactors[_selectedCategory]![_selectedActivity]!;
+      }
 
       final entryData = {
         'category': _selectedCategory,
@@ -90,7 +116,7 @@ class _CarbonTrackingScreenState extends State<CarbonTrackingScreen> {
         'quantity': double.tryParse(_quantityController.text) ?? 0.0,
         'unit': _activityUnits[_selectedActivity!] ?? '',
         'notes': _notesController.text,
-        'co2': dummyCo2,
+        'co2': co2,
         'date': Timestamp.fromDate(_selectedDate),
         'userId': _user!.uid,
       };
@@ -101,7 +127,7 @@ class _CarbonTrackingScreenState extends State<CarbonTrackingScreen> {
         // Add notification for carbon entry
         await _firestoreService!.addNotification({
           'title': 'Carbon Footprint Logged!',
-          'body': 'You logged ${dummyCo2.toStringAsFixed(1)} kg CO₂e for ${_selectedActivity ?? _selectedCategory}.',
+          'body': 'You logged ${co2.toStringAsFixed(1)} kg CO₂e for ${_selectedActivity ?? _selectedCategory}.',
           'type': 'carbon_log',
           'timestamp': Timestamp.now(),
         });
@@ -268,7 +294,7 @@ class _CarbonTrackingScreenState extends State<CarbonTrackingScreen> {
                             label: const Text('Log Entry'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF609966),
-                              foregroundColor: Colors.white,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
                               padding: const EdgeInsets.symmetric(vertical: 15),
                               textStyle: const TextStyle(fontSize: 16),
                             ),
@@ -425,16 +451,16 @@ Widget _buildPlaceholderChartCard(Color themeColor) {
                   return Center(child: Text('No data yet'));
                 }
 
-                // Aggregate CO2 by category
-                final Map<String, double> categoryTotals = {};
+                // Aggregate CO2 by activity
+                final Map<String, double> activityTotals = {};
                 for (var entry in entries) {
-                  final category = entry['category'] ?? 'Other';
+                  final activity = entry['activity'] ?? 'Other';
                   final co2 = (entry['co2'] as num?)?.toDouble() ?? 0.0;
-                  categoryTotals[category] = (categoryTotals[category] ?? 0) + co2;
+                  activityTotals[activity] = (activityTotals[activity] ?? 0) + co2;
                 }
 
-                final categories = categoryTotals.keys.toList();
-                final values = categoryTotals.values.toList();
+                final activities = activityTotals.keys.toList();
+                final values = activityTotals.values.toList();
 
                 return BarChart(
                   BarChartData(
@@ -450,11 +476,11 @@ Widget _buildPlaceholderChartCard(Color themeColor) {
                           showTitles: true,
                           getTitlesWidget: (double value, TitleMeta meta) {
                             final idx = value.toInt();
-                            if (idx < 0 || idx >= categories.length) return const SizedBox();
+                            if (idx < 0 || idx >= activities.length) return const SizedBox();
                             return Padding(
                               padding: const EdgeInsets.only(top: 8.0),
                               child: Text(
-                                categories[idx].split(' ').first,
+                                activities[idx].split(' ').first,
                                 style: const TextStyle(fontSize: 12),
                               ),
                             );
@@ -466,7 +492,7 @@ Widget _buildPlaceholderChartCard(Color themeColor) {
                       topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     ),
                     borderData: FlBorderData(show: false),
-                    barGroups: List.generate(categories.length, (i) {
+                    barGroups: List.generate(activities.length, (i) {
                       return BarChartGroupData(
                         x: i,
                         barRods: [
@@ -486,7 +512,7 @@ Widget _buildPlaceholderChartCard(Color themeColor) {
           ),
           const SizedBox(height: 8),
           Text(
-            'Shows your CO₂e by category.',
+            'Shows your CO₂e by activity.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
           ),
         ],

@@ -19,7 +19,7 @@ class ResultScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('Quiz Result')),
+      appBar: AppBar(title: const Text('Quiz Result')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -27,23 +27,27 @@ class ResultScreen extends StatelessWidget {
             children: [
               Text(
                 'Your Score: $score',
-                style: TextStyle(fontSize: 24),
+                style: TextStyle(fontSize: 24, color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text(
                 feedback,
-                style: TextStyle(fontSize: 18),
+                style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.bodyMedium?.color),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => QuizScreen()),
+                    MaterialPageRoute(builder: (context) => const QuizScreen()),
                   );
                 },
-                child: Text('Retake Quiz'),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  backgroundColor: Theme.of(context).primaryColor,
+                ),
+                child: const Text('Retake Quiz'),
               ),
             ],
           ),

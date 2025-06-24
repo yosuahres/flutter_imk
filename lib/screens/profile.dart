@@ -103,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         label: const Text('Edit Profile'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: accentColor,
-                          foregroundColor: Colors.white,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),

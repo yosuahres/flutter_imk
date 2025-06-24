@@ -8,8 +8,6 @@ import 'package:fp_imk/screens/home.dart';
 import 'package:fp_imk/screens/notification/notification_screen.dart';
 import 'package:fp_imk/screens/profile.dart';
 import 'package:flutter/services.dart'; // For SystemChrome
-import 'package:provider/provider.dart'; // Import provider
-import 'package:fp_imk/providers/theme_provider.dart'; // Import theme provider
 
 class AppSettingsScreen extends StatefulWidget {
   const AppSettingsScreen({Key? key}) : super(key: key);
@@ -20,14 +18,12 @@ class AppSettingsScreen extends StatefulWidget {
 
 class _AppSettingsScreenState extends State<AppSettingsScreen> {
   bool _isNotificationsEnabled = true;
-  bool _isDarkModeEnabled = false;
   late SharedPreferences _prefs;
   FirestoreService? _firestoreService;
   int _selectedIndex = 2; // Settings is the 3rd tab (index 2)
 
   static const Color _appHeaderColor = Color(0xFF609966);
   static const Color _primaryTextColor = Colors.white;
-  static const Color _scaffoldBgColor = Color(0xFFF0F2F0);
 
   @override
   void initState() {
@@ -43,7 +39,6 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
     _prefs = await SharedPreferences.getInstance();
     setState(() {
       _isNotificationsEnabled = _prefs.getBool('isNotificationsEnabled') ?? true;
-      _isDarkModeEnabled = _prefs.getBool('isDarkModeEnabled') ?? false;
     });
   }
 
@@ -138,7 +133,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
               final displayUserName = (userName == "User" && authSnapshot.data?.email == null) ? "None" : userName;
 
               return Scaffold(
-                backgroundColor: _scaffoldBgColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 body: SafeArea(
                   top: false,
                   child: Column(
@@ -148,7 +143,12 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                         child: ListView(
                           children: [
                             SwitchListTile(
-                              title: const Text('Enable Notifications'),
+                              title: Text(
+                                'Enable Notifications',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
                               value: _isNotificationsEnabled,
                               onChanged: (bool value) {
                                 setState(() {
@@ -158,21 +158,21 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                               },
                               secondary: const Icon(Icons.notifications),
                             ),
-                            SwitchListTile(
-                              title: const Text('Dark Mode'),
-                              value: _isDarkModeEnabled,
-                              onChanged: (bool value) {
-                                setState(() {
-                                  _isDarkModeEnabled = value;
-                                });
-                                _saveSetting('isDarkModeEnabled', value);
-                                Provider.of<ThemeProvider>(context, listen: false).toggleTheme(value);
-                              },
-                              secondary: const Icon(Icons.dark_mode),
-                            ),
                             ListTile(
-                              title: const Text('Data Usage'),
-                              subtitle: const Text('View information about your data consumption'),
+                              title: Text(
+                                'Data Usage',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'View information about your data consumption',
+                                style: TextStyle(
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Colors.grey[400]
+                                      : Colors.black54,
+                                ),
+                              ),
                               leading: const Icon(Icons.data_usage),
                               onTap: () {
                                 ScaffoldMessenger.of(context).showSnackBar(

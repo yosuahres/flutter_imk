@@ -63,7 +63,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             children: [
               Text(
                 userName,
-                style: const TextStyle(color: _primaryTextColor, fontSize: 16),
+                style: TextStyle(color: _primaryTextColor, fontSize: 16),
               ),
               const SizedBox(width: 8),
               GestureDetector(
@@ -172,7 +172,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                                 formattedTime,
                                                 style: TextStyle(
                                                   fontSize: 12.0,
-                                                  color: Colors.grey[600],
+                                                  color: Theme.of(context).textTheme.bodySmall?.color,
                                                 ),
                                               ),
                                             ],

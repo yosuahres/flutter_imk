@@ -1,0 +1,31 @@
+{
+  "Transport": {
+    "Car (Gasoline)": 0.192,
+    "Car (Diesel)": 0.171,
+    "Motorbike": 0.103,
+    "Bus": 0.105,
+    "Train": 0.041,
+    "Flight (Short Haul)": 0.255,
+    "Flight (Long Haul)": 0.180
+  },
+  "Household Energy": {
+    "Electricity": 0.411,
+    "Natural Gas": 0.203,
+    "Heating Oil": 0.268
+  },
+  "Food": {
+    "Beef": 14.8,
+    "Lamb": 39.2,
+    "Pork": 3.8,
+    "Chicken": 6.1,
+    "Fish": 2.4,
+    "Dairy": 1.9,
+    "Vegetables": 0.7,
+    "Fruits": 1.1
+  },
+  "Goods & Services": {
+    "Clothing": 6.0,
+    "Electronics": 10.0,
+    "Services": 2.0
+  }
+}
